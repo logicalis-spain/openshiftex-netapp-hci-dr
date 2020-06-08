@@ -1,0 +1,49 @@
+﻿kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: openshiftexdev
+  namespace: jlbg
+  selfLink: /apis/build.openshift.io/v1/namespaces/jlbg/buildconfigs/openshiftexdev
+  uid: 2588d4f8-d587-11e9-a805-0a580a82005b
+  resourceVersion: '14563180'
+  creationTimestamp: '2019-09-12T18:00:03Z'
+  labels:
+    app: openshiftexdev
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+spec:
+  nodeSelector: null
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'openshiftexdev:latest'
+  resources: {}
+  successfulBuildsHistoryLimit: 5
+  failedBuildsHistoryLimit: 5
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        namespace: openshift
+        name: 'php:7.2'
+  postCommit: {}
+  source:
+    type: Git
+    git:
+      uri: 'http://10.20.97.80/webdemo-kubernetes/openshiftex.git'
+  triggers:
+    - type: GitHub
+      github:
+        secret: QhmxJi9XKaHks2HysVPc
+    - type: Generic
+      generic:
+        secret: vgL0IN0ROkBfw5Uc7nKU
+    - type: ConfigChange
+    - type: ImageChange
+      imageChange:
+        lastTriggeredImageID: >-
+          image-registry.openshift-image-registry.svc:5000/openshift/php@sha256:6f697ac1aa68f20b76e197068508d43a27f15c773024173510e1be383a869554
+  runPolicy: Serial
+status:
+  lastVersion: 18

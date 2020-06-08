@@ -1,0 +1,55 @@
+node{
+checkout scm
+    env.DOCKER_API_VERSION="1.23"
+    appName = "webapp/logicalis-web"
+    registryHost = "10.20.97.100:8500/"
+    imageName = "${registryHost}${appName}:${env.BUILD_ID}"
+    env.BUILDIMG=imageName
+    checkout scm
+	stage('Build Docker Image'){
+                sh """
+                #!/bin/bash
+                NAMESPACE=development
+                REGISTRY=10.20.97.100:8500
+                docker build -t \${REGISTRY}/\${NAMESPACE}/webapp-logicalis:${env.BUILD_NUMBER} .
+                """
+         }
+        stage('Push Docker Image to Registry') {
+                sh """
+                #!/bin/bash
+                NAMESPACE=development
+                REGISTRY=10.20.97.100:8500
+
+                set +x
+                DOCKER_USER=`cat /var/run/secrets/registry-account/username`
+                DOCKER_PASSWORD=`cat /var/run/secrets/registry-account/password`
+                docker login -u=\${DOCKER_USER} -p=\${DOCKER_PASSWORD} \${REGISTRY}
+                set -x
+
+                docker push \${REGISTRY}/\${NAMESPACE}/webapp-logicalis:${env.BUILD_NUMBER}
+                """
+            }
+    container('kubectl') {
+            stage('Deploy Docker Image') {
+                sh """
+                #!/bin/bash
+                set +e
+                NAMESPACE=development
+                REGISTRY=10.20.97.100:8500
+                DEPLOYMENT=`kubectl get deployments -l app=webapp-logicalis,micro=web-bff -o name`
+
+                kubectl get \${DEPLOYMENT}
+
+                if [ \${?} -ne "0" ]; then
+                    # No deployment to update
+                    echo 'No deployment to update'
+                    exit 1
+                fi
+
+                # Update Deployment
+                kubectl set image \${DEPLOYMENT} web=\${REGISTRY}/\${NAMESPACE}/webapp-logicalis:${env.BUILD_NUMBER}
+                kubectl rollout status \${DEPLOYMENT}
+                """
+            }
+}
+}

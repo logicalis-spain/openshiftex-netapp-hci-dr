@@ -1,0 +1,31 @@
+node{
+checkout scm
+    env.DOCKER_API_VERSION="1.23"
+    appName = "webapp/logicalis-web"
+    registryHost = "10.20.97.100:8500/"
+    imageName = "${registryHost}${appName}:${env.BUILD_ID}"
+    env.BUILDIMG=imageName
+    checkout scm
+
+node {
+    def app
+
+    stage('Clone repository') {
+        checkout scm
+    }
+    stage('Build image') {
+        sh """
+        #!/bin/bash
+        docker build -t lnd87/icp:webapp .
+        """
+    }
+
+    stage('Push image') {
+        sh """
+        #!/bin/bash
+        docker login -u lnd87 --email=lauranicolas87@gmail.com -p logicalis2017 http://docker.io 
+        docker push lnd87/icp:webapp
+        """
+    }
+}
+}
