@@ -1,0 +1,25 @@
+node {
+checkout scm
+    env.DOCKER_API_VERSION="1.23"
+    appName = "webapp/logicalis-web"
+    registryHost = "10.20.97.100:8500/"
+    imageName = "${registryHost}${appName}:${env.BUILD_ID}"
+    env.BUILDIMG=imageName
+    checkout scm
+
+    def app
+
+    stage('Clone repository') {
+        checkout scm
+    }
+    stage('Build image') {
+        app = docker.build("lnd87/icp:webapp")
+    }
+
+    stage('Push image') {
+        docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+            app.push("${env.BUILD_NUMBER}")
+            app.push("latest")
+    }
+}
+}

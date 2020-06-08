@@ -1,0 +1,85 @@
+﻿kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: openshiftexfromdevtopro.jenkinswebhook-buildconfig.jlbg
+  namespace: jlbg
+  selfLink: >-
+    /apis/build.openshift.io/v1/namespaces/jlbg/buildconfigs/openshiftexfromdevtopro.jenkinswebhook-buildconfig.jlbg
+  uid: fc6f6e7c-d600-11e9-b78e-0a580a810064
+  resourceVersion: '14563092'
+  creationTimestamp: '2019-09-13T08:32:13Z'
+  labels:
+    name: openshiftexfromdevtopro.jenkinswebhook-buildconfig.jlbg
+spec:
+  nodeSelector: {}
+  output: {}
+  resources: {}
+  successfulBuildsHistoryLimit: 5
+  failedBuildsHistoryLimit: 5
+  strategy:
+    type: JenkinsPipeline
+    jenkinsPipelineStrategy:
+      jenkinsfile: |-
+        pipeline {
+          agent any
+          options {
+            timeout(time: 15, unit: 'MINUTES') 
+          }
+          stages {
+            stage('Location Stage') {
+              // sleep(time: 10, unit: 'SECONDS')
+              steps {
+                sh 'oc project jlbg'
+                sh 'echo "Using Project: `oc project`"'
+                script {
+                  openshift.withCluster() {
+                    openshift.withProject() {
+                      echo "Using project: ${openshift.project()}"
+                    }
+                  }
+                }
+                sh 'sleep 10'
+              }
+            }
+            stage('DEV - Build Stage') {
+              // sleep(time: 10, unit: 'SECONDS')
+              steps {
+                sh 'oc project jlbg'
+                sh 'echo "Using Project: `oc project`"'
+                sh 'oc start-build buildconfig.build.openshift.io/openshiftexdev'
+                sh 'sleep 10'
+              }
+            }
+            stage('PROMOTE-to-PRO - Stage') {
+              steps {
+                input message: "Promote new code?", ok: "Promote"
+              }
+            }
+            stage('PRO - Build Stage') {
+              steps {
+                sh 'oc project jlbg'
+                sh 'echo "Using Project: `oc project`"'
+                sh 'oc start-build buildconfig.build.openshift.io/openshiftexpro -n jlbg'
+                sh 'sleep 10'
+              }
+            }
+            stage('SHOW DATA Stage') {
+              steps {
+                sh 'oc get all -n jlbg |grep route |grep openshiftexdev'
+                sh 'oc get all -n jlbg |grep route |grep openshiftexpro'
+                sh 'sleep 10'
+              }
+            }
+          }
+        }
+  postCommit: {}
+  source:
+    type: None
+  triggers:
+    - type: GitLab
+      gitlab:
+        secretReference:
+          name: jenkinswebhook.secret
+  runPolicy: Serial
+status:
+  lastVersion: 17
