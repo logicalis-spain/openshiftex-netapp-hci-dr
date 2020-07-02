@@ -16,6 +16,7 @@
 if(isset($_POST['field1']) && isset($_POST['field2'])) {
     $data = $_POST['field1'] . '-' . $_POST['field2'] . "\n";
     $ret = file_put_contents('/var/log/demo-dr/fichero-demo-dr.txt', $data, FILE_APPEND | LOCK_EX);
+    chmod('/var/log/demo-dr/fichero-demo-dr.txt', 0666);
     if($ret === false) {
         die('There was an error writing this file');
     }
