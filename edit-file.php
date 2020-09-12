@@ -18,6 +18,7 @@ if(isset($_POST['field1']) && isset($_POST['field2'])) {
     $ret = file_put_contents('/var/log/demo-dr/fichero-demo-dr.txt', $data, FILE_APPEND | LOCK_EX);
     $permisos = substr(sprintf('%o', fileperms('/var/log/demo-dr/fichero-demo-dr.txt')), -4);
     if($permisos == '0644') {
+      chmod('/var/log/demo-dr', 0777);
       chmod('/var/log/demo-dr/fichero-demo-dr.txt', 0666);
     }
     if($ret === false) {
